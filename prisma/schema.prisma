@@ -1,0 +1,56 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String?
+  email     String   @unique
+  password  String?  // hashed password for credentials provider
+  image     String?
+  role      Role     @default(VIEWER)
+  posts     Post[]
+  uploads   Upload[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Post {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  imageUrl  String?
+  category  Category
+  author    User     @relation(fields: [authorId], references: [id])
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Upload {
+  id         String   @id @default(cuid())
+  fileUrl    String
+  fileType   String
+  uploadedBy User     @relation(fields: [userId], references: [id])
+  userId     String
+  createdAt  DateTime @default(now())
+}
+
+enum Role {
+  ADMIN
+  AUTHOR
+  VIEWER
+}
+
+enum Category {
+  RESEARCH
+  EVENTS
+  ACHIEVEMENTS
+  NOTICES
+}
