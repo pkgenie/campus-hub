@@ -17,16 +17,24 @@ async function main() {
     create: { semesterId: semester.id, slug: 'dsa', name: 'Data Structures & Algorithms' },
   })
 
+  // Upsert a user to use as author
+  const user = await prisma.user.upsert({
+    where: { email: 'admin@example.com' },
+    update: {},
+    create: { email: 'admin@example.com', name: 'Admin User' },
+  })
+
   // Optional: create a sample published post
   await prisma.post.upsert({
     where: { subjectId_slug: { subjectId: subject.id, slug: 'welcome' } },
     update: {},
     create: {
-      subjectId: subject.id,
       slug: 'welcome',
       title: 'Welcome to DSA',
       mdx: '# Hello!\n\nThis is an **MDX** post. Check code:\n\n```ts\nexport const hello = (name: string) => `Hello ${name}`\n```\n',
       status: 'PUBLISHED',
+      subject: { connect: { id: subject.id } },
+      author: { connect: { id: user.id } },
     },
   })
 }

@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/db'
 import { uploadDoc } from '@/actions/doc'
 
-export default async function CreateDocPage() {
+export default async function Page() {
   const subjects = await prisma.subject.findMany({ orderBy: { name: 'asc' }, take: 100, include: { semester: { include: { classroom: true } } } })
   return (
     <main className="mx-auto max-w-3xl p-6 space-y-6">
