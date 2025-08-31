@@ -1,0 +1,199 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id                    String             @id @default(cuid())
+  name                  String?
+  email                 String?            @unique
+  image                 String?
+  roles                 UserRole[]
+  enrollments           Enrollment[]
+  posts                 Post[]
+  docs                  Doc[]
+  bookmarks             Bookmark[]
+  ownedSubjects         Subject[]          @relation("SubjectOwner")
+  customLists           CustomList[]
+  customListMemberships CustomListMember[]
+  createdAt             DateTime           @default(now())
+}
+
+model Role {
+  id          Int          @id @default(autoincrement())
+  name        String       @unique // ADMIN, MOD, STUDENT
+  users       UserRole[]
+  enrollments Enrollment[]
+}
+
+model UserRole {
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+  role   Role   @relation(fields: [roleId], references: [id])
+  roleId Int
+
+  @@id([userId, roleId])
+}
+
+model Classroom {
+  id          String       @id @default(cuid())
+  name        String
+  slug        String       @unique
+  semesters   Semester[]
+  enrollments Enrollment[]
+}
+
+model Enrollment {
+  user        User      @relation(fields: [userId], references: [id])
+  userId      String
+  classroom   Classroom @relation(fields: [classroomId], references: [id])
+  classroomId String
+  role        Role      @relation(fields: [roleId], references: [id])
+  roleId      Int
+
+  @@id([userId, classroomId])
+}
+
+model Semester {
+  id          String    @id @default(cuid())
+  classroom   Classroom @relation(fields: [classroomId], references: [id])
+  classroomId String
+  name        String
+  slug        String
+  startsOn    DateTime?
+  endsOn      DateTime?
+  subjects    Subject[]
+
+  @@unique([classroomId, slug])
+}
+
+model Subject {
+  id         String   @id @default(cuid())
+  semester   Semester @relation(fields: [semesterId], references: [id])
+  semesterId String
+  name       String
+  code       String?
+  slug       String
+  owner      User?    @relation("SubjectOwner", fields: [ownerId], references: [id])
+  ownerId    String?
+  series     Series[]
+  posts      Post[]
+  docs       Doc[]
+
+  @@unique([semesterId, slug])
+}
+
+model Series {
+  id        String  @id @default(cuid())
+  subject   Subject @relation(fields: [subjectId], references: [id])
+  subjectId String
+  title     String
+  slug      String
+  order     Int     @default(0)
+  posts     Post[]
+  docs      Doc[]
+
+  @@unique([subjectId, slug])
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model Post {
+  id           String          @id @default(cuid())
+  subject      Subject         @relation(fields: [subjectId], references: [id])
+  subjectId    String
+  author       User            @relation(fields: [authorId], references: [id])
+  authorId     String
+  series       Series?         @relation(fields: [seriesId], references: [id])
+  seriesId     String?
+  title        String
+  slug         String
+  mdx          String
+  status       PostStatus      @default(DRAFT)
+  isOfficial   Boolean         @default(false)
+  visibilityId String?         @unique // FK for VisibilityRule
+  visibility   VisibilityRule? @relation("PostVisibilityRule", fields: [visibilityId], references: [id])
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@unique([subjectId, slug])
+}
+
+enum DocKind {
+  FILE
+  LINK
+}
+
+model Doc {
+  id           String          @id @default(cuid())
+  subject      Subject         @relation(fields: [subjectId], references: [id])
+  subjectId    String
+  uploader     User            @relation(fields: [uploaderId], references: [id])
+  uploaderId   String
+  series       Series?         @relation(fields: [seriesId], references: [id])
+  seriesId     String?
+  title        String
+  kind         DocKind
+  url          String
+  mime         String?
+  size         Int?
+  visibilityId String?         @unique
+  visibility   VisibilityRule? @relation("DocVisibilityRule", fields: [visibilityId], references: [id])
+  createdAt    DateTime        @default(now())
+}
+
+enum ScopeType {
+  PUBLIC
+  SCHOOL
+  CLASSROOM
+  SEMESTER
+  SUBJECT
+  SERIES
+  CUSTOM
+  LINK
+}
+
+model VisibilityRule {
+  id        String    @id @default(cuid())
+  scopeType ScopeType
+  scopeId   String?
+  linkToken String?   @unique
+  post      Post?     @relation("PostVisibilityRule")
+  postId    String?   @unique
+  doc       Doc?      @relation("DocVisibilityRule")
+  docId     String?   @unique
+}
+
+model CustomList {
+  id      String             @id @default(cuid())
+  name    String
+  owner   User               @relation(fields: [ownerId], references: [id])
+  ownerId String
+  members CustomListMember[]
+}
+
+model CustomListMember {
+  customList   CustomList @relation(fields: [customListId], references: [id])
+  customListId String
+  user         User       @relation(fields: [userId], references: [id])
+  userId       String
+
+  @@id([customListId, userId])
+}
+
+model Bookmark {
+  id         String   @id @default(cuid())
+  user       User     @relation(fields: [userId], references: [id])
+  userId     String
+  entityKind String
+  entityId   String
+  createdAt  DateTime @default(now())
+}
