@@ -23,10 +23,25 @@ export const authOptions = {
       },
     }),
   ],
+  pages: {
+    signIn: '/sign-in',
+    error: '/auth/error',
+  },
   session: { strategy: 'jwt' as const },
   callbacks: {
-    async jwt({ token, user }: { token: JWT; user?: User | any | null }) {
-      if (user && 'id' in user) token.uid = user.id;
+    async redirect({ url, baseUrl }: { url: string; baseUrl: string }) {
+      // Allows relative callback URLs
+      if (url.startsWith("/")) return `${baseUrl}${url}`
+      // Allows callback URLs on the same origin
+      else if (new URL(url).origin === baseUrl) return url
+      return baseUrl
+    },
+    async jwt({ token, user, account, profile }: { token: JWT; user?: User; account?: Account | null; profile?: Profile | null }) {
+      if (user?.id) {
+        token.uid = user.id;
+        token.email = user.email;
+        token.name = user.name;
+      }
       return token;
     },
     async session({ session, token }: { session: any; token: JWT }) {

@@ -1,7 +1,14 @@
 'use client'
-import { signIn } from 'next-auth/react'
+import { signIn, useSession } from 'next-auth/react'
+import { redirect } from 'next/navigation'
 
 export default function SignIn() {
+  const { status } = useSession()
+  
+  if (status === 'authenticated') {
+    redirect('/')
+  }
+
   return (
     <main className="min-h-screen grid place-items-center p-6">
       <div className="max-w-sm w-full space-y-4">
