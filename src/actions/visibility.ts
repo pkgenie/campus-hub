@@ -1,5 +1,5 @@
 'use server'
-import { auth } from '@/lib/auth'
+import { auth } from '@/lib/auth-server'
 import { prisma } from '@/lib/db'
 import { isMod } from '@/lib/rbac'
 import { upsertVisibilityForEntity } from '@/lib/visibility'

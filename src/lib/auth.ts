@@ -1,4 +1,5 @@
-import NextAuth from 'next-auth'
+import NextAuth, { type User, type Account, type Profile } from 'next-auth'
+import type { JWT } from 'next-auth/jwt'
 import Google from 'next-auth/providers/google'
 import Credentials from 'next-auth/providers/credentials'
 import { prisma } from './db'
@@ -22,15 +23,15 @@ export const authOptions = {
       },
     }),
   ],
-  session: { strategy: 'jwt' },
+  session: { strategy: 'jwt' as const },
   callbacks: {
-    async jwt({ token, user }) {
-      if (user) token.uid = (user as any).id
-      return token
+    async jwt({ token, user }: { token: JWT; user?: User | any | null }) {
+      if (user && 'id' in user) token.uid = user.id;
+      return token;
     },
-    async session({ session, token }) {
-      if (token?.uid) (session as any).user.id = token.uid
-      return session
+    async session({ session, token }: { session: any; token: JWT }) {
+      if (token?.uid) (session as any).user.id = token.uid;
+      return session;
     },
   },
 }

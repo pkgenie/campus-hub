@@ -1,7 +1,7 @@
 'use server'
 import { z } from 'zod'
 import { prisma } from '@/lib/db'
-import { auth } from '@/lib/auth'
+import { auth } from '@/lib/auth-server'
 import { upsertVisibilityForEntity } from '@/lib/visibility'
 import { isMod } from '@/lib/rbac'
 
@@ -44,5 +44,5 @@ export async function createPost(formData: FormData) {
   const linkToken = data.visibilityScope === 'LINK' ? crypto.randomUUID() : undefined
   await upsertVisibilityForEntity('post', post.id, data.visibilityScope as any, data.scopeId, linkToken)
 
-  return { id: post.id, linkToken }
+  // Do not return anything for form actions
 }

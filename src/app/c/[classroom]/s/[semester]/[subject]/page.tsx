@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation'
 
 export const revalidate = 0
 
-export default async function SubjectPage({ params }: { params: { classroom: string, semester: string, subject: string } }) {
+export default async function SubjectPage({ params }: any) {
   const semester = await prisma.semester.findFirst({
     where: { slug: params.semester, classroom: { slug: params.classroom } },
     include: { subjects: { where: { slug: params.subject } } }

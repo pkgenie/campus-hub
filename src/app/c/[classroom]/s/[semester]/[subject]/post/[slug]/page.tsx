@@ -1,16 +1,13 @@
 import { prisma } from '@/lib/db'
 import { notFound } from 'next/navigation'
-import { auth } from '@/lib/auth'
+import { auth } from '@/lib/auth-server'
 import { canView } from '@/lib/visibility'
 import { Mdx } from '@/lib/mdx'
 import Link from 'next/link'
 
 export const revalidate = 0
 
-export default async function PostPage({ params, searchParams }: {
-  params: { classroom: string, semester: string, subject: string, slug: string },
-  searchParams: { token?: string }
-}) {
+export default async function PostPage({ params, searchParams }: any) {
   const post = await prisma.post.findFirst({
     where: {
       slug: params.slug,
@@ -29,12 +26,13 @@ export default async function PostPage({ params, searchParams }: {
 
   const session = await auth()
   const userId = (session?.user as any)?.id as string | undefined
+  const token = Array.isArray(searchParams?.token) ? searchParams.token[0] : searchParams?.token
   const ok = await canView(userId, post.visibility, {
     classroomId: post.subject.semester.classroom.id,
     semesterId: post.subject.semester.id,
     subjectId: post.subject.id,
     seriesId: post.seriesId ?? undefined,
-    token: searchParams.token
+    token
   })
 
   if (!ok) {

@@ -2,7 +2,7 @@
 import { put } from '@vercel/blob'
 import { z } from 'zod'
 import { prisma } from '@/lib/db'
-import { auth } from '@/lib/auth'
+import { auth } from '@/lib/auth-server'
 import { upsertVisibilityForEntity } from '@/lib/visibility'
 import { isMod } from '@/lib/rbac'
 
@@ -26,7 +26,7 @@ export async function uploadDoc(formData: FormData) {
 
   DocInput.parse({ subjectId, title, file, visibilityScope, scopeId })
 
-  const uploaded = await put(`docs/${crypto.randomUUID()}-${file.name}`, file, { access: 'private' })
+  const uploaded = await put(`docs/${crypto.randomUUID()}-${file.name}`, file, { access: 'public' })
 
   const doc = await prisma.doc.create({
     data: {
@@ -43,5 +43,5 @@ export async function uploadDoc(formData: FormData) {
   const linkToken = visibilityScope === 'LINK' ? crypto.randomUUID() : undefined
   await upsertVisibilityForEntity('doc', doc.id, visibilityScope as any, scopeId, linkToken)
 
-  return { id: doc.id, linkToken }
+  // Do not return anything for form actions
 }
